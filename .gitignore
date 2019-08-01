@@ -219,3 +219,7 @@ typings/
 
 .cache/
 coverage/
+
+#Exclude tsc generated files
+src/**/*.map
+src/**/*.js
