@@ -1,0 +1,43 @@
+{
+    "name": "cvs-tsk-aws-alert",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "ENVIRONMENT=local AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest",
+        "snyk": "snyk test",
+        "build": "tsc",
+        "package": "yarn parcel build src/handler.ts --target=node --global handler -o index.js --bundle-node-modules --no-source-maps"
+    },
+    "keywords": [],
+    "author": "Martin Kemp <martinkemp@deloitte.co.uk>",
+    "license": "MIT",
+    "dependencies": {
+        "aws-lambda": "^0.1.2",
+        "aws-xray-sdk": "^2.3.4",
+        "env-var": "^5.0.0",
+        "moment": "^2.24.0",
+        "typescript": "^3.5.3",
+        "typescript-logging": "latest"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.31",
+        "@types/aws-lambda-mock-context": "^1.0.3",
+        "@types/jest": "^24.0.15",
+        "@types/lambda-tester": "^3.6.0",
+        "@types/node": "^12.6.8",
+        "@typescript-eslint/eslint-plugin": "^1.13.0",
+        "@typescript-eslint/parser": "^1.13.0",
+        "aws-lambda-mock-context": "^3.2.1",
+        "eslint": "^5.12.1",
+        "eslint-config-prettier": "^6.0.0",
+        "eslint-plugin-prettier": "^3.1.0",
+        "jest": "^24.8.0",
+        "lambda-tester": "^3.6.0",
+        "parcel": "^1.12.3",
+        "parcel-plugin-zip": "^1.0.6",
+        "prettier": "^1.18.2",
+        "snyk": "^1.198.0",
+        "ts-jest": "^24.0.2"
+    }
+}
