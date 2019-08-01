@@ -13,14 +13,14 @@ export class NotifyService {
         this.config = config ? config : { region: env.get('AWS_REGION', 'eu-west-1').asString() };
     }
 
-    public async notify(resp: GetUserResponse, notifyConfig: NotifyConfig, dryRun: boolean = false): Promise<void> {
-        const client: Lambda = AwsXRay.captureAWSClient(new Lambda(this.config));
+    public async notify(resp: GetUserResponse, notifyConfig: NotifyConfig, dryRun: boolean = false): Promise<boolean> {
+        let emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         let params: InvocationRequest = {
             FunctionName: notifyConfig.lambdaName,
             InvocationType: 'Event',
             Payload: {
                 messageType: 'email',
-                to: resp.user.UserName,
+                to: resp.user.UserName.match(emailRegex) ? resp.user.UserName : notifyConfig.defaultEmail,
                 templateId: notifyConfig.templateId,
                 templateVars: {
                     reason: resp.reason,
@@ -28,7 +28,9 @@ export class NotifyService {
             },
         };
         if (!dryRun) {
+            const client: Lambda = AwsXRay.captureAWSClient(new Lambda(this.config));
             await client.invoke(params);
         }
+        return true;
     }
 }

@@ -1,6 +1,5 @@
-import { IAM, AWSError } from 'aws-sdk';
-import { ClientConfiguration, ListUsersResponse, User } from 'aws-sdk/clients/iam';
-import { PromiseResult } from 'aws-sdk/lib/request';
+import { IAM } from 'aws-sdk';
+import { ClientConfiguration, User, DeleteUserRequest } from 'aws-sdk/clients/iam';
 import { GetUserResponse } from 'IAMService';
 // @ts-ignore
 import AwsXRay from 'aws-xray-sdk';
@@ -19,40 +18,53 @@ export class IAMService {
         this.logger = new Category('IAMService', handlerLogger);
     }
 
-    public async getExpiringUsers(days: number): Promise<GetUserResponse[]> {
+    public async getExpiringUsers(days: number, dryRun: boolean): Promise<GetUserResponse[]> {
         let client: IAM = AwsXRay.captureAWSClient(new IAM(this.config));
         this.logger.info('Retrieving users');
+
         let failUsers: GetUserResponse[] = [];
-        await client
+        let users = await client
             .listUsers()
             .promise()
-            .then((data: PromiseResult<ListUsersResponse, AWSError>): void => {
-                if (data.$response && data.$response.error != null)
-                    throw new Error(`Failed to list users: ${data.$response.error}`);
-                let users: User[] = data.Users;
-                const failDate = moment()
-                    .subtract(days, 'days')
-                    .toDate();
-                for (let user of users) {
-                    if (!user.PasswordLastUsed) {
-                        const resp: GetUserResponse = {
-                            user: user,
-                            reason: 'never had a password',
-                        };
-                        this.logger.info(`${resp.user.UserName}: ${resp.reason}`);
-                        failUsers.push(resp);
-                    } else if (user.PasswordLastUsed < failDate) {
-                        const resp: GetUserResponse = {
-                            user: user,
-                            reason: `hasn't logged in for: ${days} days, last login: ${user.PasswordLastUsed.toDateString()}`,
-                        };
-                        this.logger.info(`${resp.user.UserName}: ${resp.reason}`);
-                        failUsers.push(resp);
-                    } else {
-                        this.logger.info(`${user.UserName} is ok`);
-                    }
+            .then((value): User[] => value.Users);
+        const failDate = moment()
+            .subtract(days, 'days')
+            .toDate();
+        for await (let user of users) {
+            // If password was never used (usually a service account)
+            if (!user.PasswordLastUsed) {
+                const resp: GetUserResponse = {
+                    user: user,
+                    reason: 'never had a password',
+                };
+                this.logger.info(`${resp.user.UserName}: ${resp.reason}`);
+                failUsers.push(resp);
+                continue;
+            }
+            // Check whether user hasn't logged in for specified period
+            if (user.PasswordLastUsed < failDate) {
+                let dayDiff = moment().diff(user.PasswordLastUsed, 'days');
+                const resp: GetUserResponse = {
+                    user: user,
+                    reason: `hasn't logged in for ${dayDiff} days`,
+                    days: dayDiff,
+                };
+                // and delete them if they haven't logged in for >= 90 days
+                if (days == 90 && dayDiff >= 90 && !dryRun) {
+                    this.logger.info(`Deleting user: ${user.UserName}`);
+                    const req: DeleteUserRequest = {
+                        UserName: user.UserName,
+                    };
+                    await client.deleteUser(req).promise();
+                    resp.reason += ' and has been deleted';
                 }
-            });
+                this.logger.info(`${user.UserName}: ${resp.reason}`);
+                failUsers.push(resp);
+                continue;
+            }
+
+            this.logger.info(`${user.UserName} is ok`);
+        }
         return failUsers;
     }
 }

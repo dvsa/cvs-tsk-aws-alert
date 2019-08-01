@@ -17,30 +17,19 @@ export const handler: Handler<CWRuleEvent, AWSAlertResult> = async (
     const logger = handlerLogger;
     const config: ServiceConfig = await new ServiceConfig();
     return new Promise<AWSAlertResult>(
-        async (resolve, reject): Promise<void> => {
-            await config
-                .getConfig()
-                .then(
-                    async (value): Promise<void> => {
-                        const iam = new IAMService(value.iamConfig);
-                        const notify = new NotifyService(value.lambdaConfig);
-                        logger.info(`days: ${event.days}`);
-                        logger.info(`requestId: ${context.awsRequestId}`);
-                        const users = await iam.getExpiringUsers(event.days);
-                        await Promise.all(
-                            users.map(
-                                async (user): Promise<void> => {
-                                    logger.info(`user: ${user.user}, reason: ${user.reason}`);
-                                    await notify.notify(user, value.notifyConfig, event.dryRun);
-                                },
-                            ),
-                        );
-                        resolve({ message: `Notified ${users.length} users` });
-                    },
-                )
-                .catch((e: Error): void => {
-                    reject(e);
-                });
+        async (): Promise<AWSAlertResult> => {
+            try {
+                let sConfig = await config.getConfig();
+                const iam = new IAMService(sConfig.iamConfig);
+                const notify = new NotifyService(sConfig.lambdaConfig);
+                logger.info(`days: ${event.days}`);
+                logger.info(`requestId: ${context.awsRequestId}`);
+                const users = await iam.getExpiringUsers(event.days, event.dryRun);
+                await Promise.all(users.map(user => notify.notify(user, sConfig.notifyConfig, event.dryRun)));
+                return { message: `Notified ${users.length} users` };
+            } catch (e) {
+                throw e;
+            }
         },
     );
 };

@@ -2,6 +2,7 @@ declare module 'ServiceConfig' {
     interface NotifyConfig {
         lambdaName: string;
         templateId: string;
+        defaultEmail: string;
     }
 
     interface AWSAlertConfig {
