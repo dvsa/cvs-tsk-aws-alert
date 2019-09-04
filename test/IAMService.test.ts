@@ -10,7 +10,7 @@ it('retrieved the list of users', async (): Promise<void> => {
 });
 
 describe('each user', (): void => {
-    it('should be flagged for not using account for >30 days or for not having a password', async () => {
+    it('should be flagged for not using account for >30 days or for not having a password', async (): Promise<void> => {
         const users = await iamService.getExpiringUsers(30);
         users.forEach((user: GetUserResponse): void => {
             if (user.user.PasswordLastUsed) {
@@ -21,7 +21,7 @@ describe('each user', (): void => {
         });
     });
 
-    it('has a username which is an email address', async () => {
+    it('has a username, which is an email address', async (): Promise<void> => {
         const users = await iamService.getExpiringUsers(30);
         users.forEach((user: GetUserResponse): void => {
             if (user.user.PasswordLastUsed) {

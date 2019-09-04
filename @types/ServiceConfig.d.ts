@@ -1,11 +1,12 @@
 declare module 'ServiceConfig' {
-    interface NotifyConfig {
+    export interface NotifyConfig {
         lambdaName: string;
+        webHookUrl: string;
         templateId: string;
         defaultEmail: string;
     }
 
-    interface AWSAlertConfig {
+    export interface AWSAlertConfig {
         lambdaConfig: import('aws-sdk/clients/lambda').ClientConfiguration;
         iamConfig: import('aws-sdk/clients/iam').ClientConfiguration;
         notifyConfig: NotifyConfig;

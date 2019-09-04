@@ -1,9 +1,8 @@
 declare module 'IAMService' {
-    import { User } from 'aws-sdk/clients/iam';
-
-    interface GetUserResponse {
-        user: User;
+    export interface GetUserResponse {
+        user: import('aws-sdk/clients/iam').User;
         reason: string;
         days?: number;
+        keys?: import('aws-sdk/clients/iam').AccessKeyMetadata[];
     }
 }

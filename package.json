@@ -4,6 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
+        "lint": "eslint ./**/*.ts",
         "test": "ENVIRONMENT=local AWS_XRAY_CONTEXT_MISSING=LOG_ERROR jest",
         "snyk": "snyk test",
         "build": "tsc",
@@ -31,6 +32,7 @@
         "aws-lambda-mock-context": "^3.2.1",
         "eslint": "^5.12.1",
         "eslint-config-prettier": "^6.0.0",
+        "eslint-plugin-jsdoc": "^15.8.0",
         "eslint-plugin-prettier": "^3.1.0",
         "jest": "^24.8.0",
         "lambda-tester": "^3.6.0",
